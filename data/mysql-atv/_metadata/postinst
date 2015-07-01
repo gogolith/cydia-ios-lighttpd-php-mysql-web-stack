@@ -16,7 +16,7 @@ fi
 if [ ! -d /var/mysql/mysql ]
 then
  echo "INSTALL mysql-atv database"
- /usr/local/bin/mysql_install_db --user=daemon
+ /usr/local/bin/mysql_install_db --user=root
 
  echo "You will find the database files here: /var/mysql"
  echo "You can start the Mysql server with the command below:"
