@@ -1,3 +1,5 @@
 cURL is a file transfer command line tool.
  cURL is a multiprotocol file transfer command line tool and library for transferring data with URL syntax.
- In this version a lot of security vulnerabilities are fixed since Sauriks version 7.33.0 .
+ In this version a lot of security vulnerabilities are fixed since Saurik's version.
+ 
+ This package does not have an icon, nor should it.
