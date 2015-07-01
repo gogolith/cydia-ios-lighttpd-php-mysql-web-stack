@@ -11,3 +11,5 @@ make
 pkg:install  
 #make install
 
+pkg: mkdir -p /usr/local/share/GeoIP
+cp data/GeoIP.dat "${PKG_DEST}"/usr/local/share/GeoIP
