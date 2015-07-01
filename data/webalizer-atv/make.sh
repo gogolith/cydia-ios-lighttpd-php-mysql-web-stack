@@ -17,3 +17,4 @@ mkdir -p "${PKG_DEST}"/var/www/webalizer
 mkdir -p "${PKG_DEST}"/usr/local/share/GeoDB
 cp "${PKG_DATA}"/tk.webstack.ios.index.html "${PKG_DEST}"/var/www/webalizer
 cp "${PKG_DATA}"/GeoDB.dat "${PKG_DEST}"/usr/local/share/GeoDB
+tar xfvz "${PKG_DATA}"/webalizer-flags.tgz.flags -C "${PKG_DEST}"/var/www/webalizer 

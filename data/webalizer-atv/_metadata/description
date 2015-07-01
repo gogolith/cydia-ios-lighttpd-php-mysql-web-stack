@@ -1,5 +1,5 @@
-The Webalizer is a fast, free web server log file analysis program. 
- The Webalizer is a fast, free web server log file analysis program. 
+WEBALIZER Xtended is a web server log file analysis program. 
+ WEBALIZER Xtended web server log file analysis program. 
  It produces highly detailed, easily configurable usage reports in HTML format, for viewing with a standard web browser.
  
  The configuration is prepaired for a iOS-WebStack installation.
@@ -8,3 +8,5 @@ The Webalizer is a fast, free web server log file analysis program.
  Security: 
  Since your log contains lots of personal information of your visitors (such as IP address, Search string query and much more), it is a good idea to change /var/www/webalizer to a password protected directory.
  
+ This package does not have an icon, nor should it.
+ If you do not recognize this package you probably should not be using it.
