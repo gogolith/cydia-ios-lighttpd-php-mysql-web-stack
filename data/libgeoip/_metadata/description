@@ -1,3 +1,6 @@
 GeoIP is a library to find geographical and network information of an IP address.
  GeoIP is a library to find geographical and network information of an IP address.
  This package contains the shared GeoIP library.
+ 
+ This package does not have an icon, nor should it.
+ If you do not recognize this package you probably should not be using it.
