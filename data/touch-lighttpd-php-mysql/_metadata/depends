@@ -1,1 +1,1 @@
-com.was.mysql (>= 5.0.96), lighttpd, net.was.lighttpd, png, jpeg, tiff, libfreetype
+firmware(<< 8.0), com.was.mysql (>= 5.0.96), lighttpd, net.was.lighttpd, png, jpeg, tiff, libfreetype
