@@ -24,7 +24,7 @@ socket			= /tmp/mysql.sock
 [mysqld]
 basedir		= /usr/local
 datadir			= /var/mysql
-user			= root
+user			= daemon
 pid-file		= /var/run/mysql.pid
 port			= 3306
 socket 			= /tmp/mysql.sock

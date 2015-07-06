@@ -16,7 +16,7 @@ fi
 if [ ! -d /var/mysql/mysql ]
 then
  echo "INSTALL mysql-atv database"
- /usr/local/bin/mysql_install_db --user=root
+ /usr/local/bin/mysql_install_db --user=daemon
 
  echo "You will find the database files here: /var/mysql"
  echo "You can start the Mysql server with the command below:"
@@ -25,7 +25,31 @@ then
  echo "/usr/local/bin/mysql_secure_installation" 
  echo " "
  echo " "
+else
+
+ #START of bad Taig Group Jailbreak Check
+ echo "Checking for an installed mysql-atv on a previous bad Taig Group jailbreak."
+ echo "Checking permission of /var/mysql ..."
+ #Get user and group permission of /var/mysql
+ F_USER="$(stat -c %U /var/mysql)"
+ F_GROUP="$(stat -c %G /var/mysql)"
+ #Define needed user/group permission of /var/mysql
+ N_USER="daemon"
+ N_GROUP="wheel"
+ #Checking for an installed mysql-atv on a previous bad Taig Group jailbreak
+ if [ "$F_GROUP" == "$N_GROUP" ]
+ then
+  echo "No mysql-atv on a previous bad Taig jailbreak found..."
+  echo "Nothing to change. Good!"
+ else
+  echo "mysql-atv on a previous bad Taig jailbreak found..."
+  echo "Change permission of /var/mysql from $F_USER:$F_GROUP to $N_USER:$N_GROUP"
+  chown $N_USER:$N_GROUP /var/mysql
+ fi
+ echo "...Done!"
+ #END of bad Taig Group Jailbreak Check
 fi
+
 
  #During a package upgrade, the old packages scripts will stop and don't restart 'mysqld'
  #Therefore we have to restart it again .... just for atv-lighttpd-php-mysql
