@@ -7,6 +7,7 @@ echo PHP_PATH = "$(PKG_DEST_ php53)"
 
 
 mkdir -p ${PKG_DEST}/etc
+mkdir -p ${PKG_DEST}/etc/logrotate.d
 mkdir -p ${PKG_DEST}/var/www
 
 #PHP
@@ -16,6 +17,10 @@ cp ${PKG_DATA}/com.ios.webserver.load_all.ini ${PKG_DEST}/etc/
 
 #Lighttpd
 cp  ${PKG_DATA}/com.ios.webserver.lighttpd.conf ${PKG_DEST}/etc/
+
+#logrotate config files
+cp ${PKG_DATA}/logrotate_lighttpd_touch ${PKG_DEST}/etc/logrotate.d/lighttpd_touch
+cp ${PKG_DATA}/logrotate_mysql_was ${PKG_DEST}/etc/logrotate.d/mysql_was
 
 cp  ${PKG_DATA}/adminer.php ${PKG_DEST}/var/www/
 
