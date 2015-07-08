@@ -13,10 +13,20 @@ else
  rm /etc/com.atv.mysql.my.cnf
 fi
 
+# Check for a fresh Istallation
 if [ ! -d /var/mysql/mysql ]
 then
- echo "INSTALL mysql-atv database"
- /usr/local/bin/mysql_install_db --user=daemon
+ echo "INSTALL a mysql-atv database"
+
+ # Becaus under iOS 8.3+ the install_db script with 'daemon' permissions 
+ # does not have access to the /tmp folder (I don't know why!).
+ # So do this with the 'root' user.
+ sed -i "s{user                    = daemon{user                    = root{" /etc/my.cnf
+ /usr/local/bin/mysql_install_db
+ # Change it back to 'daemon' user...
+ sed -i "s{user                    = root{user                    = daemon{" /etc/my.cnf
+ # ...and change the owner of the folder /var/mysql to 'daemon:wheel'
+ chown daemon:wheel /var/mysql -R
 
  echo "You will find the database files here: /var/mysql"
  echo "You can start the Mysql server with the command below:"
@@ -44,7 +54,7 @@ else
  else
   echo "mysql-atv on a previous bad Taig jailbreak found..."
   echo "Change permission of /var/mysql from $F_USER:$F_GROUP to $N_USER:$N_GROUP"
-  chown $N_USER:$N_GROUP /var/mysql
+  chown $N_USER:$N_GROUP /var/mysql -R
  fi
  echo "...Done!"
  #END of bad Taig Group Jailbreak Check

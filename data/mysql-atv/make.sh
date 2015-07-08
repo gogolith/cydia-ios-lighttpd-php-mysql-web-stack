@@ -14,8 +14,7 @@ pkg:setup
 #pkg:autoconf
 #autoconf-2.69
 
-LD="${PKG_TARG}"-ld CC="${PKG_TARG}"-gcc CXX="${PKG_TARG}"-gcc pkg:configure ac_cv_path_HOSTNAME=/usr/bin/hostname ac_cv_path_PERL=no ac_cv_prog_OBJDUMP=no ac_cv_c_stack_direction=-1 ac_cv_sys_restartable_syscalls=yes mysql_cv_gcc_atomic_builtins=no --with-mysqld-user=daemon --with-mysqld-ldflags=-all-static --with-unix-socket-path=/tmp/mysql.sock --with-low-memory --disable-largefile --without-geometry --without-query-cache --without-man --without-bench --without-docs --sysconfdir=/etc --localstatedir=/usr/local/var --prefix=/usr/local --without-debug --with-innodb --with-ssl
-#--with-ssl="$(PKG_DEST_ openssl)"/usr  #use this if you need OpenSLL instead  of YaSSL 
+LD="${PKG_TARG}"-ld CC="${PKG_TARG}"-gcc CXX="${PKG_TARG}"-gcc pkg:configure ac_cv_path_HOSTNAME=/usr/bin/hostname ac_cv_path_PERL=no ac_cv_prog_OBJDUMP=no ac_cv_c_stack_direction=-1 ac_cv_sys_restartable_syscalls=yes mysql_cv_gcc_atomic_builtins=no --with-mysqld-user=daemon --with-mysqld-ldflags=-all-static --with-unix-socket-path=/tmp/mysql.sock --with-low-memory --disable-largefile --without-geometry --without-query-cache --without-man --without-bench --without-docs --sysconfdir=/etc --localstatedir=/usr/local/var --prefix=/usr/local --without-debug --with-innodb --with-ssl --disable-thread-safe-client 
 
 #copy needed and compiled executable files from the host system (Ubuntu 8.04.4 LTS Hardy Heron)
 cp ${PKG_DATA}/comp_err extra/
@@ -40,7 +39,7 @@ rm -r "${PKG_DEST}"/usr/local/lib/mysql/*.a
 
 #I don't know why, but the cross compiled client 'mysql' stops with a 'Segmentation fault: 11' error.
 #Therefore I use the older well running version which is compiled by an AppleTV2 
-cp ${PKG_DATA}/mysql_compiled_by_an_ATV2 "${PKG_DEST}"/usr/local/bin/mysql
+#cp ${PKG_DATA}/mysql_compiled_by_an_ATV2 "${PKG_DEST}"/usr/local/bin/mysql
 
 #add files to the packages
 mkdir -p "${PKG_DEST}"/etc
