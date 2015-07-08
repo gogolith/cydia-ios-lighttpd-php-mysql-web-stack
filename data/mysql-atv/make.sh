@@ -39,7 +39,7 @@ rm -r "${PKG_DEST}"/usr/local/lib/mysql/*.a
 
 #I don't know why, but the cross compiled client 'mysql' stops with a 'Segmentation fault: 11' error.
 #Therefore I use the older well running version which is compiled by an AppleTV2 
-#cp ${PKG_DATA}/mysql_compiled_by_an_ATV2 "${PKG_DEST}"/usr/local/bin/mysql
+cp ${PKG_DATA}/mysql_compiled_by_an_ATV2 "${PKG_DEST}"/usr/local/bin/mysql
 
 #add files to the packages
 mkdir -p "${PKG_DEST}"/etc
