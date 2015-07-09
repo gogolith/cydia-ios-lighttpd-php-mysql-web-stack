@@ -20,6 +20,6 @@ diff -ru wget-1.9.1/src/main.c wget-1.9.1+iPhone/src/main.c
 +        *(int *) nl[0].n_value = 0;
 +#endif
 +
-   char **url, **t;
+   char **url, **t, *p;
    int i, c, nurl, status, append_to_log;
  
