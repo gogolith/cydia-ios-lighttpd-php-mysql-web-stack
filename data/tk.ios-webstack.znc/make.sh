@@ -6,6 +6,9 @@ echo PKG_TARG = "${PKG_TARG}"
 
 pkg:setup
 
+#Copy external module
+cp ${PKG_DATA}/extern_modules/* modules
+
 pkg:configure --prefix=/usr/local
 pkg:make  
 pkg:install
