@@ -48,17 +48,15 @@ diff -r ed87dbb9034d -r 14d2b9c68a1a ext/phar/Makefile.frag
  	-@chmod +x $(builddir)/phar.phar
  
  install-pharcmd: pharcmd
---- a/ext/opcache/config.m4	2013-10-15 15:49:47.000000000 +0200
-+++ b/ext/opcache/config.m4@0:8e4d5c7fa30a	2013-10-21 02:48:58.000000000 +0200
-@@ -322,49 +322,12 @@
-   return 0;
- }
+--- a/ext/opcache/config.m4	2014-07-23 11:00:58.000000000 +0200
++++ b/ext/opcache/config.m4	2014-07-23 11:00:58.000000000 +0200
+@@ -324,48 +324,15 @@
  ],dnl
      AC_DEFINE(HAVE_SHM_MMAP_FILE, 1, [Define if you have mmap() SHM support])
      msg=yes,msg=no,msg=no)
    AC_MSG_RESULT([$msg])
--
--flock_type=unknown
+ 
+ flock_type=unknown
 -AC_MSG_CHECKING("whether flock struct is linux ordered")
 -AC_TRY_RUN([
 -  #include <fcntl.h>
@@ -94,11 +92,14 @@ diff -r ed87dbb9034d -r 14d2b9c68a1a ext/phar/Makefile.frag
 -if test "$flock_type" == "unknown"; then
 -	AC_MSG_ERROR([Don't know how to define struct flock on this system[,] set --enable-opcache=no])
 -fi
-   
+-  
++  AC_MSG_CHECKING("whether flock struct is BSD ordered")
++  AC_MSG_RESULT("yes")
++
    PHP_NEW_EXTENSION(opcache,
  	ZendAccelerator.c \
  	zend_accelerator_blacklist.c \
  	zend_accelerator_debug.c \
  	zend_accelerator_hash.c \
-
+ 	zend_accelerator_module.c \
 
