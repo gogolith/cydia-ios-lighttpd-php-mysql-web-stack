@@ -10,7 +10,7 @@ A whole AppleTV Web Server Stack Composition. THIS LAUNCHER PACKAGE MUST NOT BE 
   
  This cydia package will install some sub cydia packages like:
  
- PHP54 v5.4.*
+ PHP56 v5.6.*
  Lighttpd-atv v1.4.*
  MySQL-atv v5.1.*
  
