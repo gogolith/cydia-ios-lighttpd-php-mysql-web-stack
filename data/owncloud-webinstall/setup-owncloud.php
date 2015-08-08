@@ -4,6 +4,8 @@
  *
  * @author Frank Karlitschek
  * @copyright 2012 Frank Karlitschek frank@owncloud.org
+ * @author Lukas Reschke
+ * @copyright 2013-2015 Lukas Reschke lukas@owncloud.com
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU AFFERO GENERAL PUBLIC LICENSE
@@ -26,215 +28,309 @@
 
 
 // init
-ob_start(); 
+ob_start();
 error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 ini_set('display_errors', 1);
-set_time_limit(0);
- 
+@set_time_limit(0);
+
 /**
- * @brief Setup class with a few helper functions
- *
- */ 
-class oc_setup {
-	
- 
+ * Setup class with a few helper functions
+ */
+class Setup {
+
+	private static $requirements = array(
+		array(
+			'classes' => array(
+				'ZipArchive' => 'zip',
+				'DOMDocument' => 'dom',
+				'XMLWriter' => 'XMLWriter'
+			),
+			'functions' => array(
+				'xml_parser_create' => 'libxml',
+				'mb_detect_encoding' => 'mb multibyte',
+				'ctype_digit' => 'ctype',
+				'json_encode' => 'JSON',
+				'gd_info' => 'GD',
+				'gzencode' => 'zlib',
+				'iconv' => 'iconv',
+				'simplexml_load_string' => 'SimpleXML',
+				'hash' => 'HASH Message Digest Framework',
+				'curl_init' => 'curl',
+			),
+			'defined' => array(
+				'PDO::ATTR_DRIVER_NAME' => 'PDO'
+			),
+		)
+	);
+
+
 	/**
-	* @brief Checks if all the ownCloud dependencies are installed
+	* Checks if all the ownCloud dependencies are installed
 	* @return string with error messages
-	*/ 
-	static public function checkdependencies() {
-		$error='';
-		
-		// do we have PHP 5.3.2 or newer?
-		if(PHP_VERSION_ID<50302){
-			$error.='PHP 5.3.2 is required. Please ask your server administrator to update PHP to version 5.3.2 or higher. PHP 5.2 is no longer supported by ownCloud and the PHP community.';
-		}
-		
-		// do we have the zip module?
-		if(!class_exists('ZipArchive')){
-			$error.='PHP module zip not installed. Please ask your server administrator to install the module.';
+	*/
+	static public function checkDependencies() {
+		$error = '';
+		$missingDependencies = array();
+
+		// do we have PHP 5.4.0 or newer?
+		if(version_compare(PHP_VERSION, '5.4.0', '<')) {
+			$error.='PHP 5.4.0 is required. Please ask your server administrator to update PHP to version 5.4.0 or higher.<br/>';
 		}
 
-		// do we have the curl module?
-		if(!function_exists('curl_exec')){
-			$error.='PHP module curl not installed. Please ask your server administrator to install the module.';
+		foreach (self::$requirements[0]['classes'] as $class => $module) {
+			if (!class_exists($class)) {
+				$missingDependencies[] = array($module);
+			}
 		}
-		
+		foreach (self::$requirements[0]['functions'] as $function => $module) {
+			if (!function_exists($function)) {
+				$missingDependencies[] = array($module);
+			}
+		}
+		foreach (self::$requirements[0]['defined'] as $defined => $module) {
+			if (!defined($defined)) {
+				$missingDependencies[] = $module;
+			}
+		}
+
+		if(!empty($missingDependencies)) {
+			$error .= 'The following PHP modules are required to use ownCloud:<br/>';
+		}
+		foreach($missingDependencies as $missingDependency) {
+			$error .= '<li>'.$missingDependency[0].'</li>';
+		}
+		if(!empty($missingDependencies)) {
+			$error .= '</ul><p style="text-align:center">Please contact your server administrator to install the missing modules.</p>';
+		}
+
 		// do we have write permission?
 		if(!is_writable('.')) {
-			$error.='Can\'t write to the current directory. Please fix this by giving the webserver user write access to the directory.';
-                }
-		
+			$error.='Can\'t write to the current directory. Please fix this by giving the webserver user write access to the directory.<br/>';
+		}
+
 		return($error);
 	}
 
- 
-	/**
-	* @brief Performs the ownCloud install. 
-	* @return string with error messages
-	*/ 
-	static public function install() {	
-			$error='';
-		
-			// downloading latest release
-			$error.=oc_setup::getfile('http://download.owncloud.com/download/community/owncloud-latest.zip','oc.zip');
-			
-			// unpacking into owncloud folder
-			$zip = new ZipArchive;
-			$res = $zip->open('oc.zip');
-			if ($res==true) {
-				$zip->extractTo('.');
-				$zip->close();
-			} else {
-				$error.='unzip of owncloud source file failed.<br />';
-			}
 
-			// deleting tar file
-			$result=@unlink('oc.zip');
-			if($result==false) $error.='deleting of oc.zip failed.<br />';
-			return($error);
+	/**
+	* Check the cURL version
+	* @return bool status of CURLOPT_CERTINFO implementation
+	*/
+	static public function isCertInfoAvailable() {
+		$curlDetails =  curl_version();
+		return version_compare($curlDetails['version'], '7.19.1') != -1;
 	}
 
-	 
 	/**
-	* @brief Downloads a file and stores it in the local filesystem
-	* @param url $url
-	* @param path $path	
+	* Performs the ownCloud install.
 	* @return string with error messages
-	*/ 
-	static public function getfile($url,$path) {
+	*/
+	static public function install() {
+		$error = '';
+		$directory = $_GET['directory'];
 
+		// Test if folder already exists
+		if(file_exists('./'.$directory.'/status.php')) {
+			return 'The selected folder seems to already contain a ownCloud installation.<br />You cannot use this script to update existing installations.<br />You should delete the install script /var/www/setup-owncloud.php';
+		}
+
+		// downloading latest release
+		if (!file_exists('oc.zip')) {
+			$error .= Setup::getFile('https://download.owncloud.org/download/community/owncloud-latest.zip','oc.zip');
+		}
+
+		// unpacking into owncloud folder
+		$zip = new ZipArchive;
+		$res = $zip->open('oc.zip');
+		if ($res==true) {
+			// Extract it to the tmp dir
+			$owncloud_tmp_dir = 'tmp-owncloud'.time();
+			$zip->extractTo($owncloud_tmp_dir);
+			$zip->close();
+
+			// Move it to the folder
+			if ($_GET['directory'] === '.') {
+				foreach (array_diff(scandir($owncloud_tmp_dir.'/owncloud'), array('..', '.')) as $item) {
+					rename($owncloud_tmp_dir.'/owncloud/'.$item, './'.$item);
+				}
+				rmdir($owncloud_tmp_dir.'/owncloud');
+			} else {
+				rename($owncloud_tmp_dir.'/owncloud', './'.$directory);
+			}
+			// Delete the tmp folder
+			rmdir($owncloud_tmp_dir);
+		} else {
+			$error.='unzip of owncloud source file failed.<br />';
+		}
+
+		// deleting zip file
+		$result=@unlink('oc.zip');
+		if($result==false) $error.='deleting of oc.zip failed.<br />';
+		return($error);
+	}
+
+
+	/**
+	* Downloads a file and stores it in the local filesystem
+	* @param string $url
+	* @param string$path
+	* @return string with error messages
+	*/
+	static public function getFile($url,$path) {
 		$error='';
+
 		$fp = fopen ($path, 'w+');
-		$ch = curl_init($url); 
+		$ch = curl_init($url);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 0);
-		curl_setopt($ch, CURLOPT_FILE, $fp); 
+		curl_setopt($ch, CURLOPT_FILE, $fp);
 		curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
-		curl_setopt($ch, CURLOPT_CERTINFO, TRUE); 
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, TRUE); 
+		if (Setup::isCertInfoAvailable()){
+			curl_setopt($ch, CURLOPT_CERTINFO, TRUE);
+		}
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 		$data=curl_exec($ch);
-		$curlerror=curl_error($ch);
+		$curlError=curl_error($ch);
 		curl_close($ch);
 		fclose($fp);
- 
+
 		if($data==false){
-			$error.='download of ownCloud source file failed.<br />'.$curlerror;	
+			$error.='download of ownCloud source file failed.<br />'.$curlError;
 		}
-		return($error.$curlerror);
+		return($error.$curlError);
 
 	}
- 
-  
+
+
 	/**
-	* @brief Shows the html header of the setup page
-	*/ 
-	static public function showheader(){
+	* Shows the html header of the setup page
+	*/
+	static public function showHeader() {
 		echo('
 		<!DOCTYPE html>
-		<html>	
-			<head>	
+		<html>
+			<head>
 				<title>ownCloud Setup</title>
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-				<link rel="icon" type="image/png" href="http://owncloud.org/setupwizard/favicon.png" />
-				<link rel="stylesheet" href="http://owncloud.org/setupwizard/styles.css" type="text/css" media="screen" />
+				<link rel="icon" type="image/png" href="https://owncloud.org/setupwizard/favicon.png" />
+				<link rel="stylesheet" href="https://owncloud.org/setupwizard/styles.css" type="text/css" media="screen" />
+				<style type="text/css">
+				body {
+					text-align:center;
+					font-size:13px;
+					color:#666;
+					font-weight:bold;
+				}
+				</style>
 			</head>
 
 			<body id="body-login">
 		');
 	}
 
- 
+
 	/**
-	* @brief Shows the html footer of the setup page
-	*/ 
-	static public function showfooter(){
+	* Shows the html footer of the setup page
+	*/
+	static public function showFooter() {
 		echo('
-		<footer><p class="info"><a href="http://owncloud.org/">ownCloud</a> &ndash; web services under your control</p></footer>
+		<footer><p class="info"><a href="https://owncloud.org/">ownCloud</a> &ndash; web services under your control</p></footer>
 		</body>
-		</html>	
+		</html>
 		');
 	}
-	
-	 
+
+
 	/**
-	* @brief Shows the html content part of the setup page
-	* @param title $title	
-	* @param content $content
-	* @param nextpage $nextpage
-	*/ 
-	static public function showcontent($title,$content,$nextpage=''){
+	* Shows the html content part of the setup page
+	* @param string $title
+	* @param string $content
+	* @param string $nextpage
+	*/
+	static public function showContent($title, $content, $nextpage=''){
 		echo('
 		<div id="login">
 			<header><div id="header">
-				<img src="http://owncloud.org/setupwizard/logo.png" alt="ownCloud" />
+				<img src="https://owncloud.org/setupwizard/logo.png" alt="ownCloud" />
 			</div></header><br />
 			<p style="text-align:center; font-size:28px; color:#444; font-weight:bold;">'.$title.'</p><br />
 			<p style="text-align:center; font-size:13px; color:#666; font-weight:bold; ">'.$content.'</p>
 			<form method="get">
-					<input type="hidden" name="step" value="'.$nextpage.'" />
+				<input type="hidden" name="step" value="'.$nextpage.'" />
 		');
 		
+		
+		if($nextpage === 2) {
+		/**
+				echo ('<p style="padding-left:0.5em; padding-right:0.5em">Enter a single "." to install in the current directory, or enter a subdirectory to install to:</p>
+				<input type="text" style="margin-left:0; margin-right:0" name="directory" value="owncloud" required="required" />');
+		**/
+		echo ('<input type="hidden" value="owncloud" name="directory" />');
+		}
+		
+
+		if($nextpage === 3) {
+			echo ('<input type="hidden" value="'.$_GET['directory'].'" name="directory" />');
+		}
+
 		if($nextpage<>'') echo('<input type="submit" id="submit" class="login" style="margin-right:100px;" value="Next" />');
 
 		echo('
 		</form>
 		</div>
-		
+
 		');
 	}
 
 
 	/**
-	* @brief Shows the wecome screen of the setup wizard
-	*/ 
-	static public function showwelcome(){
-		$txt='Welcome to the ownCloud Setup Wizard.<br />This wizard will check the ownCloud dependencies, download the newest version of ownCloud and install it in a few simple steps';
-		oc_setup::showcontent('Setup Wizard',$txt,1);
+	* Shows the welcome screen of the setup wizard
+	*/
+	static public function showWelcome() {
+		$txt='Welcome to the ownCloud Setup Wizard.<br />This wizard will check the ownCloud dependencies, download the newest version of ownCloud and install it in a few simple steps.';
+		Setup::showContent('Setup Wizard',$txt,1);
 	}
 
 
 	/**
-	* @brief Shows the check dependencies screen
-	*/ 
-	static public function showcheckdependencies(){
-		$error=oc_setup::checkdependencies();
+	* Shows the check dependencies screen
+	*/
+	static public function showCheckDependencies() {
+		$error=Setup::checkDependencies();
 		if($error=='') {
-			$txt='All ownCloud dependencies found.<br />The file download and installtion to /var/www/owncloud takes a few minutes. Click Next and wait...';
-			oc_setup::showcontent('Dependency check',$txt,2);
+			$txt='All ownCloud dependencies found.<br />The file download and the installtion to /var/www/owncloud takes a few minutes. Click Next and wait...';
+			Setup::showContent('Dependency check',$txt,2);
 		}else{
 			$txt='Dependencies not found.<br />'.$error;
-			oc_setup::showcontent('Dependency check',$txt);
+			Setup::showContent('Dependency check',$txt);
 		}
 	}
 
 
 	/**
-	* @brief Shows the install screen
-	*/ 
-	static public function showinstall(){
-		$error=oc_setup::install();
-	
+	* Shows the install screen
+	*/
+	static public function showInstall() {
+		$error=Setup::install();
 		if($error=='') {
-			$txt='<br />You must restart your Lighttpd-Server now!!!<br /><br />ownCloud is now installed.<br />You will find your ownCloud website here: http://Your_iOS_Device/owncloud<br /><br />You must restart your Lighttpd-Server now!!!<br />';
-			oc_setup::showcontent('Success',$txt,3);
+			$txt='ownCloud is now installed.<br /><br />You must restart your Lighttpd-Server!!!<br /><br />You will find your ownCloud website here: http://Your_iOS_Device/owncloud<br />';
+			Setup::showContent('Success',$txt,3);
 		}else{
 			$txt='ownCloud is NOT installed<br />'.$error;
-			oc_setup::showcontent('Error',$txt);
+			Setup::showContent('Error',$txt);
 		}
 	}
 
-
 	/**
-	* @brief Shows the redirect screen
-	*/ 
-	static public function showredirect(){
+	* Shows the redirect screen
+	*/
+	static public function showRedirect() {
 		// delete own file
 		@unlink($_SERVER['SCRIPT_FILENAME']);
-		
+
 		// redirect to ownCloud
-		header("Location: owncloud");	
-	}	
-	
+		header("Location: ".$_GET['directory']);
+	}
+
 }
 
 
@@ -242,17 +338,15 @@ class oc_setup {
 if(isset($_GET['step'])) $step=$_GET['step']; else $step=0;
 
 // show the header
-oc_setup::showheader();
+Setup::showHeader();
 
 // show the right step
-if     ($step==0) oc_setup::showwelcome();
-elseif ($step==1) oc_setup::showcheckdependencies();
-elseif ($step==2) oc_setup::showinstall();
-elseif ($step==3) oc_setup::showredirect();
-else  echo('Internal error. Please try again.'); 
+if     ($step==0) Setup::showWelcome();
+elseif ($step==1) Setup::showCheckDependencies();
+elseif ($step==2) Setup::showInstall();
+elseif ($step==3) Setup::showRedirect();
+else  echo('Internal error. Please try again.');
 
 // show the footer
-oc_setup::showfooter();
+Setup::showFooter();
 
-
-?>

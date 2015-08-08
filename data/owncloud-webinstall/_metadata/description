@@ -12,7 +12,6 @@ Web installer for the newest available ownCloud version. After the installation 
  
  After the download please restart your lighttpd-Server and open Safari at your iOS Device and type in 'http://localhost/setup-owncloud.php'.
  
- (Please use Safari. I don't know why, but e.g. Chrome create some problems.)
  The webinstaller will create files at /var/www/owncloud with permissions for the user 'daemon:_www'.
  
  During the installation you can choose MySQL or SQLite3.
@@ -21,7 +20,6 @@ Web installer for the newest available ownCloud version. After the installation 
  - Quick, save and easy. Need not mutch memory.
  
  Using of MySQL:
- - You will get some errors one or two times. But that is not a problem. Reload the page and everything is fine.
  - You will needs an existing MySQL user and an existing MySQL database.
  - Before you start the ownCloud Setup, please create these with 'Adminer' or with the cydia package 'phpmyadmin-atv'.
   
@@ -30,5 +28,5 @@ Web installer for the newest available ownCloud version. After the installation 
  If you remove this package, please note that all content in /var/www/owncloud will be deleted.
  If you use MySQL, the database will not be removed. 
  
- If you would like to get more package information, please have a look at http://goo.gl/LXfUB . 
+ If you would like to get more package information, please have a look at http://ios-webstack.tk
  
